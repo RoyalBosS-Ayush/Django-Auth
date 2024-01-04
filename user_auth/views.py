@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm, LoginForm
-
 
 def signup(request):
     if request.user.is_authenticated:
@@ -19,12 +18,15 @@ def signup(request):
 
 
 def user_login(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
     if request.method == "POST":
         form = LoginForm(data=request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect("dashboard")
+            user = authenticate(request, username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+            if user is not None:
+                login(request, user)
+                return redirect('dashboard')
     else:
         form = LoginForm()
     return render(request, "login.html", {"form": form})
